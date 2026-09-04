@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+*.log
+dns.log
+allowlist.txt
+googlevideo-blocklist.txt
+googlevideo-state.json
+*.sqlite3
+.DS_Store
