@@ -42,12 +42,13 @@ Der Dienst lädt keine fremden Blocklisten, ruft keine externen APIs auf und lei
 https://api.adguard-dns.io/oapi/v1/query_log
 ```
 
-Der Dienst fragt dort alle fünf Minuten mit `search=googlevideo.com` und `limit=1000` die Logeinträge ab und liest das Feld `domain` aus. Die Authentifizierung wird ausschließlich über Umgebungsvariablen gesetzt:
+Die API verlangt zusätzlich ein Zeitfenster. Der Dienst setzt deshalb bei jedem Lauf automatisch `time_from_millis` und `time_to_millis`, standardmäßig für die letzten 24 Stunden, sowie `search=googlevideo.com` und `limit=1000`. Anschließend liest er die Felder `domain` aus. Die Authentifizierung wird ausschließlich über Umgebungsvariablen gesetzt:
 
 ```bash
 export ADGUARD_DNS_API_URL="https://api.adguard-dns.io"
 export ADGUARD_DNS_API_KEY="DEIN_ADGUARD_DNS_API_KEY"
 export ADGUARD_DNS_AUTH_MODE="apikey"  # alternativ: bearer
+export ADGUARD_DNS_LOOKBACK_SECONDS="86400"  # optional: 24 Stunden
 python3 googlevideo_fanger.py --once
 ```
 
