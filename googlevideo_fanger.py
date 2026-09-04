@@ -33,7 +33,6 @@ ROOT_DOMAIN = "googlevideo.com"
 
 @dataclass(frozen=True)
 class Config:
-    source: Path
     output: Path
     state: Path
     interval: int = 300
@@ -69,7 +68,7 @@ def is_googlevideo_host(host: str) -> bool:
 
 
 def extract_googlevideo_hosts(text: str) -> Set[str]:
-    """Gibt exakt die vollständigen Regex-Treffer aus dns.log zurück."""
+    """Gibt exakt die vollständigen Regex-Treffer aus API-Domainfeldern zurück."""
     return {
         normalize_host(match.group(0))
         for match in DOMAIN_RE.finditer(text)
@@ -85,12 +84,6 @@ def load_allowlist(path: Path | None) -> Set[str]:
         if line and is_googlevideo_host(line):
             result.add(normalize_host(line))
     return result
-
-
-def read_source(path: Path) -> str:
-    if not path.exists():
-        raise FileNotFoundError(f"Quelle nicht gefunden: {path}")
-    return path.read_text(encoding="utf-8", errors="replace")
 
 
 def read_adguard_dns_query_log(
@@ -184,15 +177,17 @@ def write_state(path: Path, hosts: Set[str], output: str) -> None:
 
 
 def run_once(config: Config) -> Set[str]:
-    if config.adguard_api_url and config.adguard_api_key:
-        source_text = read_adguard_dns_query_log(
-            config.adguard_api_url,
-            config.adguard_api_key,
-            config.adguard_auth_mode,
-            lookback_seconds=config.adguard_lookback_seconds,
+    if not config.adguard_api_url or not config.adguard_api_key:
+        raise RuntimeError(
+            "AdGuard-DNS-API ist nicht konfiguriert. Setze "
+            "ADGUARD_DNS_API_URL und ADGUARD_DNS_API_KEY."
         )
-    else:
-        source_text = read_source(config.source)
+    source_text = read_adguard_dns_query_log(
+        config.adguard_api_url,
+        config.adguard_api_key,
+        config.adguard_auth_mode,
+        lookback_seconds=config.adguard_lookback_seconds,
+    )
     discovered = extract_googlevideo_hosts(source_text)
     excluded = load_allowlist(config.allowlist)
     hosts = discovered - excluded
@@ -205,7 +200,6 @@ def run_once(config: Config) -> Set[str]:
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--source", type=Path, default=Path(os.getenv("GV_SOURCE", "./dns.log")))
     parser.add_argument("--output", type=Path, default=Path(os.getenv("GV_OUTPUT", "./googlevideo-blocklist.txt")))
     parser.add_argument("--state", type=Path, default=Path(os.getenv("GV_STATE", "./googlevideo-state.json")))
     parser.add_argument("--allowlist", type=Path, default=Path(os.getenv("GV_ALLOWLIST", "./allowlist.txt")))
@@ -238,7 +232,6 @@ def main(argv: list[str] | None = None) -> int:
         LOG.error("Intervall muss mindestens 30 Sekunden betragen.")
         return 2
     config = Config(
-        args.source,
         args.output,
         args.state,
         args.interval,
