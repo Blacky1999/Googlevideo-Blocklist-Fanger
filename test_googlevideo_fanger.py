@@ -34,6 +34,13 @@ class GooglevideoFangerTests(unittest.TestCase):
             {"googlevideo.com", "a.b.googlevideo.com"},
         )
 
+    def test_wildcard_googlevideo_subdomains(self):
+        text = "query one.googlevideo.com query two.three.googlevideo.com"
+        self.assertEqual(
+            extract_googlevideo_hosts(text),
+            {"one.googlevideo.com", "two.three.googlevideo.com"},
+        )
+
     def test_render_is_adguard_compatible(self):
         output = render_blocklist({"b.googlevideo.com", "a.googlevideo.com"})
         self.assertIn("||a.googlevideo.com^", output)

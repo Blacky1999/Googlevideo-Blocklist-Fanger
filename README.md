@@ -10,7 +10,7 @@ Der Fänger liest ausschließlich eine von dir angegebene lokale Quelldatei. Die
 re.compile("(?i)(?<![a-z0-9_.-])(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)*googlevideo\\.com(?![a-z0-9_.-])")
 ```
 
-Aus einer Zeile wie `query r1---sn-ab5l6n7e.googlevideo.com` wird ausschließlich der vollständige Treffer `r1---sn-ab5l6n7e.googlevideo.com` übernommen. Der Fänger dedupliziert Treffer, entfernt optionale Allowlist-Einträge und schreibt die Blockliste atomar. Dadurch lesen DNS-/AdGuard-Clients entweder die alte oder die vollständige neue Datei, niemals eine halbfertige Datei.
+Das `*` in `*.googlevideo.com` wird durch das wiederholbare Subdomain-Label im Regex abgedeckt. Dadurch werden sowohl `one.googlevideo.com` als auch `two.three.googlevideo.com` erkannt. Aus einer Zeile wie `query r1---sn-ab5l6n7e.googlevideo.com` wird ausschließlich der vollständige Treffer `r1---sn-ab5l6n7e.googlevideo.com` übernommen. Der Fänger dedupliziert Treffer, entfernt optionale Allowlist-Einträge und schreibt die Blockliste atomar. Dadurch lesen DNS-/AdGuard-Clients entweder die alte oder die vollständige neue Datei, niemals eine halbfertige Datei.
 
 Der Dienst lädt keine fremden Blocklisten, ruft keine externen APIs auf und leitet keine DNS-Daten weiter. Die Blockliste ist kumulativ über den aktuellen Inhalt der Logdatei; bei Logrotation sollte die Quelldatei auf den aktiven Logpfad zeigen.
 
