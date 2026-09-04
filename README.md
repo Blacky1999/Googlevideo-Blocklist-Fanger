@@ -34,6 +34,25 @@ query rr4---sn-ci5gup-2o9l.googlevideo.com.
 
 Der Dienst lädt keine fremden Blocklisten, ruft keine externen APIs auf und leitet keine DNS-Daten weiter. Die Blockliste ist kumulativ über den aktuellen Inhalt der Logdatei; bei Logrotation sollte die Quelldatei auf den aktiven Logpfad zeigen.
 
+## AdGuard DNS online: Query-Log-API
+
+`https://d.adguard-dns.com/dns-query` ist ausschließlich ein DNS-over-HTTPS-Endpunkt. Er nimmt DNS-Anfragen entgegen, stellt aber keine Query-Logs bereit. Für die Online-Logs verwendet der Fänger deshalb die offizielle API:
+
+```text
+https://api.adguard-dns.io/oapi/v1/query_log
+```
+
+Der Dienst fragt dort alle fünf Minuten mit `search=googlevideo.com` und `limit=1000` die Logeinträge ab und liest das Feld `domain` aus. Die Authentifizierung wird ausschließlich über Umgebungsvariablen gesetzt:
+
+```bash
+export ADGUARD_DNS_API_URL="https://api.adguard-dns.io"
+export ADGUARD_DNS_API_KEY="DEIN_ADGUARD_DNS_API_KEY"
+export ADGUARD_DNS_AUTH_MODE="apikey"  # alternativ: bearer
+python3 googlevideo_fanger.py --once
+```
+
+Der im Chat gepostete DoH-Link enthielt Zugangsdaten. Diese sollten sofort im AdGuard-Konto widerrufen beziehungsweise zurückgesetzt werden. DoH-Passwörter sind nicht automatisch API-Schlüssel und gehören nicht in `ADGUARD_DNS_API_KEY`.
+
 > Hinweis: Eine Blockliste für `googlevideo.com` kann YouTube-Videoauslieferung, eingebettete Videos und andere Google-Video-Dienste beeinträchtigen. Nutze die Allowlist für benötigte Hosts.
 
 ## Schnelltest
@@ -47,12 +66,14 @@ cat googlevideo-blocklist.txt
 
 ## Serverbetrieb mit systemd
 
-Die mitgelieferte Unit erwartet einen Debian-/Ubuntu-Server und eine DNSMasq-Logdatei unter `/var/log/dnsmasq.log`. Passe den Pfad in `googlevideo-fanger.service` an, falls dein DNS- oder Proxy-Dienst an eine andere Datei schreibt.
+Die mitgelieferte Unit verwendet die Online-Query-Log-API und erwartet einen Debian-/Ubuntu-Server. Lege den API-Schlüssel in einer nicht versionierten Root-Datei ab:
 
 ```bash
 sudo useradd --system --home /opt/googlevideo-blocklist-fanger --shell /usr/sbin/nologin googlevideo-fanger
 sudo install -d -o googlevideo-fanger -g googlevideo-fanger /opt/googlevideo-blocklist-fanger /var/lib/googlevideo-fanger
 sudo install -m 0755 googlevideo_fanger.py /opt/googlevideo-blocklist-fanger/googlevideo_fanger.py
+sudo install -m 0600 /dev/null /etc/googlevideo-fanger.env
+sudo sh -c 'printf "%s\\n" "ADGUARD_DNS_API_KEY=DEIN_API_KEY" "ADGUARD_DNS_AUTH_MODE=apikey" > /etc/googlevideo-fanger.env'
 sudo install -m 0644 googlevideo-fanger.service /etc/systemd/system/googlevideo-fanger.service
 sudo touch /etc/googlevideo-fanger-allowlist.txt
 sudo chown root:root /etc/googlevideo-fanger-allowlist.txt

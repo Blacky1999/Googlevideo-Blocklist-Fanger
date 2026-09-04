@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 from googlevideo_fanger import (
@@ -8,6 +9,7 @@ from googlevideo_fanger import (
     extract_googlevideo_hosts,
     is_googlevideo_host,
     normalize_host,
+    read_adguard_dns_query_log,
     render_blocklist,
     run_once,
 )
@@ -56,6 +58,27 @@ class GooglevideoFangerTests(unittest.TestCase):
             extract_googlevideo_hosts("query a.googlevideo.com."),
             set(),
         )
+
+    def test_adguard_dns_api_liefert_nur_domainfelder(self):
+        class Response:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def read(self):
+                return b'{"items":[{"domain":"r1.googlevideo.com"},{"domain":"example.org"}]}'
+
+        with patch("googlevideo_fanger.urllib.request.urlopen", return_value=Response()) as opener:
+            text = read_adguard_dns_query_log(
+                "https://api.adguard-dns.io", "test-api-key"
+            )
+        request = opener.call_args.args[0]
+        self.assertIn("/oapi/v1/query_log?", request.full_url)
+        self.assertIn("search=googlevideo.com", request.full_url)
+        self.assertEqual(request.get_header("Authorization"), "ApiKey test-api-key")
+        self.assertEqual(text, "r1.googlevideo.com\nexample.org")
 
     def test_render_is_adguard_compatible(self):
         output = render_blocklist({"b.googlevideo.com", "a.googlevideo.com"})

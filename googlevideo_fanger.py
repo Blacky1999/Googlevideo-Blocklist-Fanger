@@ -16,9 +16,12 @@ import re
 import sys
 import tempfile
 import time
+import urllib.error
+import urllib.parse
+import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Set
+from typing import Any, Iterable, Set
 
 LOG = logging.getLogger("googlevideo-fanger")
 # Einzeiliger Regex für die Log-Suche: exakt googlevideo.com sowie
@@ -35,6 +38,9 @@ class Config:
     state: Path
     interval: int = 300
     allowlist: Path | None = None
+    adguard_api_url: str | None = None
+    adguard_api_key: str | None = None
+    adguard_auth_mode: str = "apikey"
 
 
 def normalize_host(host: str) -> str:
@@ -86,6 +92,43 @@ def read_source(path: Path) -> str:
     return path.read_text(encoding="utf-8", errors="replace")
 
 
+def read_adguard_dns_query_log(
+    api_url: str,
+    api_key: str,
+    auth_mode: str = "apikey",
+    timeout: int = 30,
+) -> str:
+    """Liest Query-Log-Domainfelder über die offizielle AdGuard-DNS-API."""
+    query = urllib.parse.urlencode({"search": "googlevideo.com", "limit": 1000})
+    endpoint = api_url.rstrip("/") + "/oapi/v1/query_log?" + query
+    mode = auth_mode.strip().lower()
+    if mode == "bearer":
+        authorization = f"Bearer {api_key.strip()}"
+    elif mode == "apikey":
+        authorization = f"ApiKey {api_key.strip()}"
+    else:
+        raise ValueError("ADGUARD_DNS_AUTH_MODE muss 'apikey' oder 'bearer' sein.")
+    request = urllib.request.Request(
+        endpoint,
+        headers={"Authorization": authorization, "Accept": "application/json"},
+        method="GET",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            payload: Any = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        raise RuntimeError(f"AdGuard-DNS-API HTTP-Fehler {exc.code}.") from exc
+    except urllib.error.URLError as exc:
+        raise RuntimeError(f"AdGuard-DNS-API Netzwerkfehler: {exc.reason}") from exc
+    if not isinstance(payload, dict) or not isinstance(payload.get("items"), list):
+        raise RuntimeError("Unerwartete AdGuard-DNS-Query-Log-Antwort.")
+    return "\n".join(
+        str(item.get("domain", ""))
+        for item in payload["items"]
+        if isinstance(item, dict)
+    )
+
+
 def render_blocklist(hosts: Iterable[str]) -> str:
     ordered = sorted(set(hosts))
     lines = [
@@ -126,7 +169,14 @@ def write_state(path: Path, hosts: Set[str], output: str) -> None:
 
 
 def run_once(config: Config) -> Set[str]:
-    source_text = read_source(config.source)
+    if config.adguard_api_url and config.adguard_api_key:
+        source_text = read_adguard_dns_query_log(
+            config.adguard_api_url,
+            config.adguard_api_key,
+            config.adguard_auth_mode,
+        )
+    else:
+        source_text = read_source(config.source)
     discovered = extract_googlevideo_hosts(source_text)
     excluded = load_allowlist(config.allowlist)
     hosts = discovered - excluded
@@ -144,6 +194,16 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--state", type=Path, default=Path(os.getenv("GV_STATE", "./googlevideo-state.json")))
     parser.add_argument("--allowlist", type=Path, default=Path(os.getenv("GV_ALLOWLIST", "./allowlist.txt")))
     parser.add_argument("--interval", type=int, default=int(os.getenv("GV_INTERVAL", "300")))
+    parser.add_argument(
+        "--adguard-api-url",
+        default=os.getenv("ADGUARD_DNS_API_URL"),
+        help="AdGuard-DNS-API-Basis-URL, z. B. https://api.adguard-dns.io",
+    )
+    parser.add_argument(
+        "--adguard-auth-mode",
+        default=os.getenv("ADGUARD_DNS_AUTH_MODE", "apikey"),
+        choices=("apikey", "bearer"),
+    )
     parser.add_argument("--once", action="store_true", help="Nur einen Aktualisierungszyklus ausführen")
     parser.add_argument("--log-level", default=os.getenv("GV_LOG_LEVEL", "INFO"))
     return parser.parse_args(argv)
@@ -155,7 +215,16 @@ def main(argv: list[str] | None = None) -> int:
     if args.interval < 30:
         LOG.error("Intervall muss mindestens 30 Sekunden betragen.")
         return 2
-    config = Config(args.source, args.output, args.state, args.interval, args.allowlist)
+    config = Config(
+        args.source,
+        args.output,
+        args.state,
+        args.interval,
+        args.allowlist,
+        args.adguard_api_url,
+        os.getenv("ADGUARD_DNS_API_KEY", "").strip() or None,
+        args.adguard_auth_mode,
+    )
     while True:
         try:
             run_once(config)
