@@ -1,84 +1,201 @@
 # Googlevideo-Blocklist-Fanger
 
-Ein kleiner, serverfähiger Python-Dienst, der die offiziellen AdGuard-DNS-Query-Logs nach `googlevideo.com`-Domains und Subdomains durchsucht und daraus alle fünf Minuten eine **AdGuard-kompatible Blockliste** erzeugt.
+Der **Googlevideo-Blocklist-Fanger** liest ausschließlich die offiziellen Query Logs von AdGuard DNS über einen persönlichen **AdGuard DNS API Key**. Gefundene `googlevideo.com`-Domains und Subdomains werden alle fünf Minuten in eine AdGuard-kompatible Blockliste geschrieben.
 
-## Was der Dienst macht
+## Datenquelle und Authentifizierung
 
-Der Fänger verwendet ausschließlich die AdGuard-DNS-Query-Log-API. Die Erkennung der aus der API gelieferten `domain`-Felder verwendet genau diesen einzeiligen Python-Regex:
+Die einzige Datenquelle ist:
+
+```text
+GET https://api.adguard-dns.io/oapi/v1/query_log
+```
+
+Die Authentifizierung erfolgt ausschließlich mit:
+
+```http
+Authorization: ApiKey DEIN_API_KEY
+```
+
+Nicht unterstützt werden:
+
+- lokale `dns.log`- oder Proxy-Logdateien,
+- `--source` und `GV_SOURCE`,
+- DNS-over-HTTPS-Zugangsdaten von `d.adguard-dns.com/dns-query`,
+- Benutzername/Passwort in URLs,
+- Bearer-Token.
+
+> Ein DoH-Link löst DNS-Anfragen auf, stellt aber keine Query Logs bereit. DoH-Zugangsdaten sind kein AdGuard DNS API Key.
+
+## Erkennung
+
+Auf jedes von der API gelieferte `domain`-Feld wird dieser Regex angewandt:
 
 ```python
 re.compile("(?i)(?<![a-z0-9_.-])(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)*googlevideo\\.com(?![a-z0-9_.-])")
 ```
 
-Das `*` in `*.googlevideo.com` wird durch das wiederholbare Subdomain-Label im Regex abgedeckt. Dadurch werden sowohl `one.googlevideo.com` als auch `two.three.googlevideo.com` erkannt. Die Logsuche verwendet ausschließlich diesen Regex: Ein abschließender DNS-Punkt wie in `a.googlevideo.com.` wird absichtlich nicht als Treffer akzeptiert. Aus einer Zeile wie `query r1---sn-ab5l6n7e.googlevideo.com` wird ausschließlich der vollständige Treffer `r1---sn-ab5l6n7e.googlevideo.com` übernommen. Der Fänger dedupliziert Treffer, entfernt optionale Allowlist-Einträge und schreibt die Blockliste atomar. Dadurch lesen DNS-/AdGuard-Clients entweder die alte oder die vollständige neue Datei, niemals eine halbfertige Datei.
-
-Der Regex wird auf die aus den API-Antworten gelesenen `domain`-Werte angewandt. Ein abschließender DNS-Punkt wird absichtlich nicht akzeptiert. Der Dienst lädt keine fremden Blocklisten und leitet keine Query-Log-Daten weiter.
-
-## AdGuard DNS online: Query-Log-API
-
-`https://d.adguard-dns.com/dns-query` ist ausschließlich ein DNS-over-HTTPS-Endpunkt. Er nimmt DNS-Anfragen entgegen, stellt aber keine Query-Logs bereit. Für die Online-Logs verwendet der Fänger deshalb die offizielle API:
+Erkannt werden beispielsweise:
 
 ```text
-https://api.adguard-dns.io/oapi/v1/query_log
+googlevideo.com
+r1.googlevideo.com
+r8.sn-w5nuxa-2tmz.googlevideo.com
+rr3---sn-bvvbaxivnuxqjvhj5nu-qxo6.googlevideo.com
 ```
 
-Die API verlangt zusätzlich ein Zeitfenster. Der Dienst setzt deshalb bei jedem Lauf automatisch `time_from_millis` und `time_to_millis`, standardmäßig für die letzten 24 Stunden, sowie `search=googlevideo.com` und `limit=1000`. Anschließend liest er die Felder `domain` aus. Die Authentifizierung wird ausschließlich über Umgebungsvariablen gesetzt:
+Die Ausgabe verwendet AdGuard-Syntax:
 
-```bash
-export ADGUARD_DNS_API_URL="https://api.adguard-dns.io"
-export ADGUARD_DNS_API_KEY="DEIN_ADGUARD_DNS_API_KEY"
-export ADGUARD_DNS_AUTH_MODE="apikey"  # alternativ: bearer
-export ADGUARD_DNS_LOOKBACK_SECONDS="86400"  # optional: 24 Stunden
-python3 googlevideo_fanger.py --once
+```text
+||r8.sn-w5nuxa-2tmz.googlevideo.com^
 ```
 
-Der im Chat gepostete DoH-Link enthielt Zugangsdaten. Diese sollten sofort im AdGuard-Konto widerrufen beziehungsweise zurückgesetzt werden. DoH-Passwörter sind nicht automatisch API-Schlüssel und gehören nicht in `ADGUARD_DNS_API_KEY`.
+## Installation auf Ubuntu/Debian
 
-> Hinweis: Eine Blockliste für `googlevideo.com` kann YouTube-Videoauslieferung, eingebettete Videos und andere Google-Video-Dienste beeinträchtigen. Nutze die Allowlist für benötigte Hosts.
-
-## Serverbetrieb mit systemd
-
-Die mitgelieferte Unit verwendet die Online-Query-Log-API und erwartet einen Debian-/Ubuntu-Server. Lege den API-Schlüssel in einer nicht versionierten Root-Datei ab:
+Repository nach `/opt` klonen oder aktualisieren:
 
 ```bash
-sudo useradd --system --home /opt/googlevideo-blocklist-fanger --shell /usr/sbin/nologin googlevideo-fanger
-sudo install -d -o googlevideo-fanger -g googlevideo-fanger /opt/googlevideo-blocklist-fanger /var/lib/googlevideo-fanger
-sudo install -m 0755 googlevideo_fanger.py /opt/googlevideo-blocklist-fanger/googlevideo_fanger.py
-sudo install -m 0600 /dev/null /etc/googlevideo-fanger.env
-sudo sh -c 'printf "%s\\n" "ADGUARD_DNS_API_KEY=DEIN_API_KEY" "ADGUARD_DNS_AUTH_MODE=apikey" > /etc/googlevideo-fanger.env'
-sudo install -m 0644 googlevideo-fanger.service /etc/systemd/system/googlevideo-fanger.service
+cd /opt
+sudo git clone https://github.com/Blacky1999/Googlevideo-Blocklist-Fanger.git
+cd /opt/Googlevideo-Blocklist-Fanger
+```
+
+Falls es bereits vorhanden ist:
+
+```bash
+cd /opt/Googlevideo-Blocklist-Fanger
+sudo git pull origin main
+```
+
+Systembenutzer und Verzeichnisse anlegen:
+
+```bash
+sudo useradd --system --home /opt/Googlevideo-Blocklist-Fanger --shell /usr/sbin/nologin googlevideo-fanger 2>/dev/null || true
+sudo install -d -o googlevideo-fanger -g googlevideo-fanger /var/lib/googlevideo-fanger
 sudo touch /etc/googlevideo-fanger-allowlist.txt
 sudo chown root:root /etc/googlevideo-fanger-allowlist.txt
-sudo systemctl daemon-reload
-sudo systemctl enable --now googlevideo-fanger.service
-sudo systemctl status googlevideo-fanger.service
+sudo chmod 0644 /etc/googlevideo-fanger-allowlist.txt
 ```
 
-Die erzeugte Datei liegt dann unter:
+## API Key sicher eintragen
+
+Vorher im Chat, Terminalverlauf oder Repository veröffentlichte Schlüssel müssen im AdGuard-Konto widerrufen und ersetzt werden.
+
+Vorlage installieren:
+
+```bash
+sudo install -m 0600 googlevideo-fanger.env.example /etc/googlevideo-fanger.env
+sudo nano /etc/googlevideo-fanger.env
+```
+
+Inhalt:
+
+```text
+ADGUARD_DNS_API_KEY=DEIN_NEUER_ADGUARD_DNS_API_KEY
+ADGUARD_DNS_LOOKBACK_SECONDS=86400
+GV_INTERVAL=300
+```
+
+Die Datei muss nur für `root` lesbar bleiben:
+
+```bash
+sudo chown root:root /etc/googlevideo-fanger.env
+sudo chmod 0600 /etc/googlevideo-fanger.env
+```
+
+Der API Key wird weder als Kommandozeilenargument noch im Repository gespeichert.
+
+## Manueller Testlauf
+
+Das Skript lädt `/etc/googlevideo-fanger.env` automatisch. Deshalb funktioniert auch ein Start mit `sudo`, ohne dass exportierte Benutzer-Variablen verloren gehen:
+
+```bash
+cd /opt/Googlevideo-Blocklist-Fanger
+sudo python3 googlevideo_fanger.py \
+  --output /var/lib/googlevideo-fanger/googlevideo-blocklist.txt \
+  --state /var/lib/googlevideo-fanger/state.json \
+  --allowlist /etc/googlevideo-fanger-allowlist.txt \
+  --once
+```
+
+Ergebnis prüfen:
+
+```bash
+sudo cat /var/lib/googlevideo-fanger/googlevideo-blocklist.txt
+sudo cat /var/lib/googlevideo-fanger/state.json
+```
+
+Bei HTTP-Fehlern zeigt das Skript den von AdGuard gelieferten Fehlertext an. `401` oder `403` weist gewöhnlich auf einen ungültigen beziehungsweise unberechtigten API Key hin. `400` weist meist auf ungültige Abfrageparameter hin.
+
+## Dauerbetrieb mit systemd
+
+Unit installieren und starten:
+
+```bash
+cd /opt/Googlevideo-Blocklist-Fanger
+sudo install -m 0644 googlevideo-fanger.service /etc/systemd/system/googlevideo-fanger.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now googlevideo-fanger.service
+```
+
+Status und Logs:
+
+```bash
+sudo systemctl status googlevideo-fanger.service
+sudo journalctl -u googlevideo-fanger.service -f
+```
+
+Die Unit lädt `/etc/googlevideo-fanger.env` und startet den API-Abruf alle 300 Sekunden. Die Blockliste liegt unter:
 
 ```text
 /var/lib/googlevideo-fanger/googlevideo-blocklist.txt
 ```
 
-Diese Datei kann in AdGuard Home, Pi-hole oder einem eigenen DNS-/Proxy-Setup als lokale Filterquelle eingebunden werden. Der Fänger selbst ändert keine DNS-Konfiguration automatisch.
+## API-Abfrage
+
+Jeder Zyklus sendet:
+
+| Parameter | Wert |
+|---|---|
+| `time_from_millis` | Beginn des konfigurierten Zeitfensters |
+| `time_to_millis` | aktuelle Zeit |
+| `search` | `googlevideo.com` |
+| `limit` | `1000` pro Seite |
+| `cursor` | automatisch bei weiteren Seiten |
+
+Das Standard-Zeitfenster beträgt 86.400 Sekunden beziehungsweise 24 Stunden. Pagination wird automatisch verarbeitet.
 
 ## Konfiguration
 
 | Variable/Argument | Standard | Bedeutung |
-|---|---|---|
-| `--adguard-api-url` / `ADGUARD_DNS_API_URL` | `https://api.adguard-dns.io` | AdGuard-DNS-API-Basis-URL |
-| `ADGUARD_DNS_API_KEY` | keine | API-Schlüssel außerhalb des Repositories |
-| `ADGUARD_DNS_AUTH_MODE` | `apikey` | `apikey` oder `bearer` |
-| `ADGUARD_DNS_LOOKBACK_SECONDS` | `86400` | Zeitraum des Query-Logs |
-| `--output` / `GV_OUTPUT` | `./googlevideo-blocklist.txt` | AdGuard-Ausgabe |
-| `--state` / `GV_STATE` | `./googlevideo-state.json` | Status und Hash |
-| `--allowlist` / `GV_ALLOWLIST` | `./allowlist.txt` | erlaubte googlevideo-Hosts, eine Domain pro Zeile |
-| `--interval` / `GV_INTERVAL` | `300` | Aktualisierungsintervall in Sekunden |
+|---|---:|---|
+| `ADGUARD_DNS_API_KEY` | erforderlich | persönlicher AdGuard DNS API Key |
+| `ADGUARD_DNS_LOOKBACK_SECONDS` / `--lookback-seconds` | `86400` | Query-Log-Zeitraum |
+| `GV_INTERVAL` / `--interval` | `300` | Aktualisierungsintervall |
+| `GV_OUTPUT` / `--output` | `./googlevideo-blocklist.txt` | Blocklist-Datei |
+| `GV_STATE` / `--state` | `./googlevideo-state.json` | Statusdatei |
+| `GV_ALLOWLIST` / `--allowlist` | `./allowlist.txt` | optionale Allowlist |
+| `GV_ENV_FILE` / `--env-file` | `/etc/googlevideo-fanger.env` | geschützte Konfigurationsdatei |
 
-Das Mindestintervall beträgt 30 Sekunden. Für die gewünschte Aktualisierung alle fünf Minuten bleibt der systemd-Wert `300`.
+## Tests
 
-## Sicherheit und Grenzen
+Die Tests verwenden ausschließlich simulierte API-Antworten und niemals einen echten Schlüssel:
 
-Der Dienst benötigt nur Leserechte auf die Quelldatei und Schreibrechte auf sein Ausgabeverzeichnis. Die systemd-Unit aktiviert `NoNewPrivileges`, `ProtectSystem=strict`, `ProtectHome` und einen unprivilegierten Benutzer. Prüfe vor dem Start, dass der Dienst die DNS-Logdatei lesen darf.
+```bash
+python3 -m unittest -v
+```
 
-Das Repository ist privat angelegt. Keine API-Schlüssel, Zugangsdaten oder echten DNS-Logs gehören in das Repository. Nutze `.gitignore` für lokale Logs und generierte Dateien.
+Geprüft werden Regex, alle 18 Beispieldomains, API-Key-Header, Pflichtzeitparameter, Pagination, Env-Datei, Allowlist und atomare Ausgabe.
+
+## Sicherheit
+
+- Keine Zugangsdaten in Git committen.
+- `/etc/googlevideo-fanger.env` mit Modus `0600` schützen.
+- Versehentlich veröffentlichte Keys sofort widerrufen.
+- Die systemd-Unit läuft als unprivilegierter Benutzer und nutzt `NoNewPrivileges`, `ProtectSystem=strict` und `ProtectHome=true`.
+- Das Blockieren von `googlevideo.com` kann YouTube und eingebettete Videos vollständig unterbrechen.
+
+## Offizielle Dokumentation
+
+- [AdGuard DNS API Reference](https://adguard-dns.io/kb/private-dns/api/reference/)
+- [AdGuard DNS Query Log](https://adguard-dns.io/kb/private-dns/statistics-and-log/query-log/)
+- [AdGuard DNS OpenAPI Specification](https://adguard-dns.io/api/swagger/openapi.json)

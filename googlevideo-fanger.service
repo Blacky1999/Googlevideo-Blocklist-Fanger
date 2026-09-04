@@ -1,14 +1,15 @@
 [Unit]
-Description=Googlevideo-Blocklist-Fanger
-After=network.target
+Description=Googlevideo-Blocklist-Fanger (AdGuard DNS API Key only)
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
 User=googlevideo-fanger
 Group=googlevideo-fanger
-WorkingDirectory=/opt/googlevideo-blocklist-fanger
-EnvironmentFile=-/etc/googlevideo-fanger.env
-ExecStart=/usr/bin/python3 /opt/googlevideo-blocklist-fanger/googlevideo_fanger.py --adguard-api-url https://api.adguard-dns.io --output /var/lib/googlevideo-fanger/googlevideo-blocklist.txt --state /var/lib/googlevideo-fanger/state.json --allowlist /etc/googlevideo-fanger-allowlist.txt --interval 300
+WorkingDirectory=/opt/Googlevideo-Blocklist-Fanger
+EnvironmentFile=/etc/googlevideo-fanger.env
+ExecStart=/usr/bin/python3 /opt/Googlevideo-Blocklist-Fanger/googlevideo_fanger.py --output /var/lib/googlevideo-fanger/googlevideo-blocklist.txt --state /var/lib/googlevideo-fanger/state.json --allowlist /etc/googlevideo-fanger-allowlist.txt
 Restart=always
 RestartSec=10
 NoNewPrivileges=true
