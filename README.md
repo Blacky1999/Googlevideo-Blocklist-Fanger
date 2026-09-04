@@ -12,6 +12,26 @@ re.compile("(?i)(?<![a-z0-9_.-])(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)*goog
 
 Das `*` in `*.googlevideo.com` wird durch das wiederholbare Subdomain-Label im Regex abgedeckt. Dadurch werden sowohl `one.googlevideo.com` als auch `two.three.googlevideo.com` erkannt. Die Logsuche verwendet ausschließlich diesen Regex: Ein abschließender DNS-Punkt wie in `a.googlevideo.com.` wird absichtlich nicht als Treffer akzeptiert. Aus einer Zeile wie `query r1---sn-ab5l6n7e.googlevideo.com` wird ausschließlich der vollständige Treffer `r1---sn-ab5l6n7e.googlevideo.com` übernommen. Der Fänger dedupliziert Treffer, entfernt optionale Allowlist-Einträge und schreibt die Blockliste atomar. Dadurch lesen DNS-/AdGuard-Clients entweder die alte oder die vollständige neue Datei, niemals eine halbfertige Datei.
 
+### Exaktes `dns.log`-Format
+
+Gesucht wird der vollständige Regex-Treffer innerhalb jeder Logzeile. Das Präfix `query` ist lediglich ein übliches Logformat und wird nicht Bestandteil des Treffers:
+
+```text
+query rr4---sn-ci5gup-2o9l.googlevideo.com
+```
+
+Ergebnis:
+
+```text
+rr4---sn-ci5gup-2o9l.googlevideo.com
+```
+
+Diese Form wird nicht als Treffer akzeptiert, weil der letzte Regex ausdrücklich keinen abschließenden Punkt erlaubt:
+
+```text
+query rr4---sn-ci5gup-2o9l.googlevideo.com.
+```
+
 Der Dienst lädt keine fremden Blocklisten, ruft keine externen APIs auf und leitet keine DNS-Daten weiter. Die Blockliste ist kumulativ über den aktuellen Inhalt der Logdatei; bei Logrotation sollte die Quelldatei auf den aktiven Logpfad zeigen.
 
 > Hinweis: Eine Blockliste für `googlevideo.com` kann YouTube-Videoauslieferung, eingebettete Videos und andere Google-Video-Dienste beeinträchtigen. Nutze die Allowlist für benötigte Hosts.
