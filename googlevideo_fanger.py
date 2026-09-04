@@ -21,10 +21,8 @@ from pathlib import Path
 from typing import Iterable, Set
 
 LOG = logging.getLogger("googlevideo-fanger")
-DOMAIN_RE = re.compile(
-    r"(?<![A-Za-z0-9_-])(?:[A-Za-z0-9](?:[A-Za-z0-9_-]{0,61}[A-Za-z0-9])?\.)+"
-    r"[A-Za-z]{2,63}(?![A-Za-z0-9_-])"
-)
+# Einzeiliger Regex: Root-Domain und beliebig viele gültige Subdomain-Labels.
+DOMAIN_RE = re.compile(r"(?i)(?<![a-z0-9_.-])(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*googlevideo\.com(?![a-z0-9_.-])")
 GOOGLEVIDEO_SUFFIX = ".googlevideo.com"
 ROOT_DOMAIN = "googlevideo.com"
 
@@ -63,11 +61,10 @@ def is_googlevideo_host(host: str) -> bool:
 
 
 def extract_googlevideo_hosts(text: str) -> Set[str]:
-    """Findet Domainnamen in beliebigem Logtext und filtert googlevideo-Hosts."""
+    """Gibt exakt die vollständigen Regex-Treffer aus dns.log zurück."""
     return {
-        normalize_host(candidate)
-        for candidate in DOMAIN_RE.findall(text)
-        if is_googlevideo_host(candidate)
+        normalize_host(match.group(0))
+        for match in DOMAIN_RE.finditer(text)
     }
 
 

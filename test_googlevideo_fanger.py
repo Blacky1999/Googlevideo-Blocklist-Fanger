@@ -27,6 +27,13 @@ class GooglevideoFangerTests(unittest.TestCase):
         text = "query r1---sn-ab5l6n7e.googlevideo.com\nquery R1---SN-AB5L6N7E.GOOGLEVIDEO.COM.\nquery example.com"
         self.assertEqual(extract_googlevideo_hosts(text), {"r1---sn-ab5l6n7e.googlevideo.com"})
 
+    def test_regex_gibt_den_vollstaendigen_query_treffer_zurueck(self):
+        text = "query googlevideo.com\nquery a.b.googlevideo.com\nquery xgooglevideo.com\nquery googlevideo.com.evil.example"
+        self.assertEqual(
+            extract_googlevideo_hosts(text),
+            {"googlevideo.com", "a.b.googlevideo.com"},
+        )
+
     def test_render_is_adguard_compatible(self):
         output = render_blocklist({"b.googlevideo.com", "a.googlevideo.com"})
         self.assertIn("||a.googlevideo.com^", output)
