@@ -45,10 +45,16 @@ class GooglevideoFangerTests(unittest.TestCase):
         sample = Path(__file__).with_name("sample_dns.log")
         hosts = extract_googlevideo_hosts(sample.read_text(encoding="utf-8"))
         self.assertEqual(len(hosts), 18)
-        extra = "query A.B.GOOGLEVIDEO.COM. query x-y.z-9.googlevideo.com:443/path"
+        extra = "query A.B.GOOGLEVIDEO.COM query x-y.z-9.googlevideo.com:443/path"
         self.assertEqual(
             extract_googlevideo_hosts(extra),
             {"a.b.googlevideo.com", "x-y.z-9.googlevideo.com"},
+        )
+
+    def test_log_regex_lehnt_abschliessenden_punkt_ab(self):
+        self.assertEqual(
+            extract_googlevideo_hosts("query a.googlevideo.com."),
+            set(),
         )
 
     def test_render_is_adguard_compatible(self):
