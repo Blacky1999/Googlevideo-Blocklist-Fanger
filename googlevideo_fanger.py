@@ -22,7 +22,7 @@ from typing import Iterable, Set
 
 LOG = logging.getLogger("googlevideo-fanger")
 # Einzeiliger Regex: Root-Domain und beliebig viele gültige Subdomain-Labels.
-DOMAIN_RE = re.compile(r"(?i)(?<![a-z0-9_.-])(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*googlevideo\.com(?![a-z0-9_.-])")
+DOMAIN_RE = re.compile("(?i)(?<![a-z0-9_.-])(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)*googlevideo\\.com(?![a-z0-9_.-])")
 GOOGLEVIDEO_SUFFIX = ".googlevideo.com"
 ROOT_DOMAIN = "googlevideo.com"
 

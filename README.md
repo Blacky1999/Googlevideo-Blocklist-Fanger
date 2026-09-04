@@ -7,7 +7,7 @@ Ein kleiner, serverfähiger Python-Dienst, der eine lokale DNS- oder Proxy-Logda
 Der Fänger liest ausschließlich eine von dir angegebene lokale Quelldatei. Die Erkennung verwendet genau diesen einzeiligen Python-Regex:
 
 ```python
-re.compile(r"(?i)(?<![a-z0-9_.-])(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*googlevideo\.com(?![a-z0-9_.-])")
+re.compile("(?i)(?<![a-z0-9_.-])(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)*googlevideo\\.com(?![a-z0-9_.-])")
 ```
 
 Aus einer Zeile wie `query r1---sn-ab5l6n7e.googlevideo.com` wird ausschließlich der vollständige Treffer `r1---sn-ab5l6n7e.googlevideo.com` übernommen. Der Fänger dedupliziert Treffer, entfernt optionale Allowlist-Einträge und schreibt die Blockliste atomar. Dadurch lesen DNS-/AdGuard-Clients entweder die alte oder die vollständige neue Datei, niemals eine halbfertige Datei.
