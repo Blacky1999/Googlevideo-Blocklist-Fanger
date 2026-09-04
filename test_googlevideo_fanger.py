@@ -41,6 +41,16 @@ class GooglevideoFangerTests(unittest.TestCase):
             {"one.googlevideo.com", "two.three.googlevideo.com"},
         )
 
+    def test_alle_18_beispiele_und_aehnliche_strukturen(self):
+        sample = Path(__file__).with_name("sample_dns.log")
+        hosts = extract_googlevideo_hosts(sample.read_text(encoding="utf-8"))
+        self.assertEqual(len(hosts), 18)
+        extra = "query A.B.GOOGLEVIDEO.COM. query x-y.z-9.googlevideo.com:443/path"
+        self.assertEqual(
+            extract_googlevideo_hosts(extra),
+            {"a.b.googlevideo.com", "x-y.z-9.googlevideo.com"},
+        )
+
     def test_render_is_adguard_compatible(self):
         output = render_blocklist({"b.googlevideo.com", "a.googlevideo.com"})
         self.assertIn("||a.googlevideo.com^", output)
