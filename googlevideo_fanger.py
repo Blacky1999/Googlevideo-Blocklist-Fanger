@@ -41,6 +41,7 @@ class Config:
     adguard_api_url: str | None = None
     adguard_api_key: str | None = None
     adguard_auth_mode: str = "apikey"
+    adguard_lookback_seconds: int = 86400
 
 
 def normalize_host(host: str) -> str:
@@ -97,9 +98,20 @@ def read_adguard_dns_query_log(
     api_key: str,
     auth_mode: str = "apikey",
     timeout: int = 30,
+    lookback_seconds: int = 86400,
 ) -> str:
     """Liest Query-Log-Domainfelder über die offizielle AdGuard-DNS-API."""
-    query = urllib.parse.urlencode({"search": "googlevideo.com", "limit": 1000})
+    if lookback_seconds <= 0:
+        raise ValueError("ADGUARD_DNS_LOOKBACK_SECONDS muss größer als 0 sein.")
+    now_millis = int(time.time() * 1000)
+    query = urllib.parse.urlencode(
+        {
+            "time_from_millis": now_millis - (lookback_seconds * 1000),
+            "time_to_millis": now_millis,
+            "search": "googlevideo.com",
+            "limit": 1000,
+        }
+    )
     endpoint = api_url.rstrip("/") + "/oapi/v1/query_log?" + query
     mode = auth_mode.strip().lower()
     if mode == "bearer":
@@ -117,7 +129,10 @@ def read_adguard_dns_query_log(
         with urllib.request.urlopen(request, timeout=timeout) as response:
             payload: Any = json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
-        raise RuntimeError(f"AdGuard-DNS-API HTTP-Fehler {exc.code}.") from exc
+        details = exc.read().decode("utf-8", errors="replace")[:500]
+        raise RuntimeError(
+            f"AdGuard-DNS-API HTTP-Fehler {exc.code}: {details}"
+        ) from exc
     except urllib.error.URLError as exc:
         raise RuntimeError(f"AdGuard-DNS-API Netzwerkfehler: {exc.reason}") from exc
     if not isinstance(payload, dict) or not isinstance(payload.get("items"), list):
@@ -174,6 +189,7 @@ def run_once(config: Config) -> Set[str]:
             config.adguard_api_url,
             config.adguard_api_key,
             config.adguard_auth_mode,
+            lookback_seconds=config.adguard_lookback_seconds,
         )
     else:
         source_text = read_source(config.source)
@@ -204,6 +220,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=os.getenv("ADGUARD_DNS_AUTH_MODE", "apikey"),
         choices=("apikey", "bearer"),
     )
+    parser.add_argument(
+        "--adguard-lookback-seconds",
+        type=int,
+        default=int(os.getenv("ADGUARD_DNS_LOOKBACK_SECONDS", "86400")),
+        help="Zeitraum des Online-Query-Logs, Standard: 86400 Sekunden",
+    )
     parser.add_argument("--once", action="store_true", help="Nur einen Aktualisierungszyklus ausführen")
     parser.add_argument("--log-level", default=os.getenv("GV_LOG_LEVEL", "INFO"))
     return parser.parse_args(argv)
@@ -224,6 +246,7 @@ def main(argv: list[str] | None = None) -> int:
         args.adguard_api_url,
         os.getenv("ADGUARD_DNS_API_KEY", "").strip() or None,
         args.adguard_auth_mode,
+        args.adguard_lookback_seconds,
     )
     while True:
         try:
