@@ -2,6 +2,8 @@
 
 Der **Googlevideo-Blocklist-Fanger** liest ausschließlich die offiziellen Query Logs von AdGuard DNS über einen persönlichen **AdGuard DNS API Key**. Gefundene `googlevideo.com`-Domains und Subdomains werden alle fünf Minuten in eine AdGuard-kompatible Blockliste geschrieben.
 
+> **Festgelegte Integration:** Dieses Projekt verwendet bewusst **AdGuard DNS** und keinen selbst gehosteten AdGuard-Home-Server. AdGuard DNS unterstützt API-Key-Authentifizierung für die Query-Log-API. AdGuard Home verwendet für dieselbe Query-Log-Funktion derzeit HTTP Basic Auth und keine native API-Key-Authentifizierung.
+
 ## Datenquelle und Authentifizierung
 
 Die einzige Datenquelle ist:
