@@ -1,5 +1,5 @@
 [Unit]
-Description=Googlevideo-Blocklist-Fanger (AdGuard DNS API Key only)
+Description=Googlevideo-Blocklist-Fanger (AdGuard DNS to GitHub)
 After=network-online.target
 Wants=network-online.target
 

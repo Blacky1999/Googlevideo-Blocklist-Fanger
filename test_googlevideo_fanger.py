@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import base64
 import json
 import os
 import tempfile
@@ -13,6 +14,7 @@ from googlevideo_fanger import (
     is_googlevideo_host,
     normalize_host,
     parse_args,
+    publish_blocklist_to_github,
     read_adguard_dns_query_log,
     read_env_file,
     render_blocklist,
@@ -79,26 +81,24 @@ sn-cu-ajted.googlevideo.com
 rr1.sn-gwpa-o5br.googlevideo.com"""
         self.assertEqual(len(extract_googlevideo_hosts(examples)), 18)
 
-    def test_api_key_header_and_required_time_parameters(self):
+    def test_adguard_api_key_header_and_required_time_parameters(self):
         requests = []
 
         def opener(request, timeout):
             requests.append(request)
             return Response({"items": [{"domain": "r1.googlevideo.com"}], "pages": []})
 
-        text = read_adguard_dns_query_log(
-            "test-api-key", lookback_seconds=300, opener=opener
-        )
+        text = read_adguard_dns_query_log("adguard-key", lookback_seconds=300, opener=opener)
         request = requests[0]
         params = urllib.parse.parse_qs(urllib.parse.urlsplit(request.full_url).query)
-        self.assertEqual(request.get_header("Authorization"), "ApiKey test-api-key")
+        self.assertEqual(request.get_header("Authorization"), "ApiKey adguard-key")
         self.assertIn("time_from_millis", params)
         self.assertIn("time_to_millis", params)
         self.assertEqual(params["search"], ["googlevideo.com"])
         self.assertEqual(params["limit"], ["1000"])
         self.assertEqual(text, "r1.googlevideo.com")
 
-    def test_api_pagination(self):
+    def test_adguard_api_pagination(self):
         responses = iter(
             [
                 Response(
@@ -132,27 +132,64 @@ rr1.sn-gwpa-o5br.googlevideo.com"""
         self.assertEqual(len(requests), 2)
         self.assertIn("cursor=p2", requests[1].full_url)
 
-    def test_env_file(self):
+    def test_github_update_uses_sha_and_commit_message(self):
+        requests = []
+        desired = "! Entries: 1\n\n||r1.googlevideo.com^\n"
+
+        def opener(request, timeout):
+            requests.append(request)
+            if request.get_method() == "GET":
+                return Response(
+                    {
+                        "sha": "existing-sha",
+                        "content": base64.b64encode(b"old content\n").decode("ascii"),
+                    }
+                )
+            return Response({"commit": {"sha": "new-commit"}})
+
+        updated = publish_blocklist_to_github(
+            desired,
+            1,
+            "github-token",
+            repository="owner/repository",
+            opener=opener,
+        )
+        self.assertTrue(updated)
+        self.assertEqual(len(requests), 2)
+        self.assertEqual(requests[0].get_header("Authorization"), "Bearer github-token")
+        self.assertEqual(requests[1].get_method(), "PUT")
+        payload = json.loads(requests[1].data.decode("utf-8"))
+        self.assertEqual(payload["sha"], "existing-sha")
+        self.assertEqual(payload["message"], "chore(blocklist): update 1 googlevideo hosts")
+        self.assertEqual(base64.b64decode(payload["content"]), desired.encode("utf-8"))
+
+    def test_github_skips_unchanged_content(self):
+        desired = "! Entries: 0\n"
+        calls = []
+
+        def opener(request, timeout):
+            calls.append(request)
+            return Response(
+                {"sha": "existing-sha", "content": base64.b64encode(desired.encode()).decode()}
+            )
+
+        updated = publish_blocklist_to_github(desired, 0, "github-token", opener=opener)
+        self.assertFalse(updated)
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0].get_method(), "GET")
+
+    def test_env_file_and_parse_args(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "service.env"
             path.write_text(
-                "# API-only\nADGUARD_DNS_API_KEY=test-key\nGV_INTERVAL=300\n",
+                "ADGUARD_DNS_API_KEY=adguard-key\nGITHUB_TOKEN=github-token\nGV_INTERVAL=301\n",
                 encoding="utf-8",
             )
             values = read_env_file(path)
-            self.assertEqual(values["ADGUARD_DNS_API_KEY"], "test-key")
-            self.assertEqual(values["GV_INTERVAL"], "300")
-
-    def test_parse_args_laedt_api_key_aus_env_datei(self):
-        with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "service.env"
-            path.write_text(
-                "ADGUARD_DNS_API_KEY=file-api-key\nGV_INTERVAL=301\n",
-                encoding="utf-8",
-            )
+            self.assertEqual(values["GITHUB_TOKEN"], "github-token")
             with patch.dict(os.environ, {}, clear=True):
-                args, values = parse_args(["--env-file", str(path), "--once"])
-            self.assertEqual(values["ADGUARD_DNS_API_KEY"], "file-api-key")
+                args, parsed_values = parse_args(["--env-file", str(path), "--once"])
+            self.assertEqual(parsed_values["ADGUARD_DNS_API_KEY"], "adguard-key")
             self.assertEqual(args.interval, 301)
 
     def test_render_is_adguard_compatible(self):
@@ -161,7 +198,7 @@ rr1.sn-gwpa-o5br.googlevideo.com"""
         self.assertIn("||b.googlevideo.com^", output)
         self.assertLess(output.index("a.googlevideo.com"), output.index("b.googlevideo.com"))
 
-    def test_run_once_api_only(self):
+    def test_run_once_syncs_and_writes_state(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             output = root / "blocklist.txt"
@@ -169,7 +206,7 @@ rr1.sn-gwpa-o5br.googlevideo.com"""
             allowlist = root / "allowlist.txt"
             allowlist.write_text("keep.googlevideo.com\n", encoding="utf-8")
 
-            def opener(request, timeout):
+            def adguard_opener(request, timeout):
                 return Response(
                     {
                         "items": [
@@ -181,22 +218,32 @@ rr1.sn-gwpa-o5br.googlevideo.com"""
                     }
                 )
 
+            github_requests = []
+
+            def github_opener(request, timeout):
+                github_requests.append(request)
+                if request.get_method() == "GET":
+                    return Response({"sha": "existing", "content": base64.b64encode(b"old").decode()})
+                return Response({"commit": {"sha": "commit"}})
+
             hosts = run_once(
                 Config(
                     output=output,
                     state=state,
-                    api_key="test-api-key",
+                    adguard_api_key="adguard-key",
+                    github_token="github-token",
                     allowlist=allowlist,
                 ),
-                opener=opener,
+                adguard_opener=adguard_opener,
+                github_opener=github_opener,
             )
             self.assertEqual(hosts, {"r1.googlevideo.com"})
             self.assertIn("||r1.googlevideo.com^", output.read_text(encoding="utf-8"))
             self.assertNotIn("keep.googlevideo.com", output.read_text(encoding="utf-8"))
-            self.assertEqual(
-                json.loads(state.read_text(encoding="utf-8"))["source"],
-                "adguard-dns-query-log-api",
-            )
+            state_payload = json.loads(state.read_text(encoding="utf-8"))
+            self.assertTrue(state_payload["github_updated"])
+            self.assertEqual(state_payload["github_repository"], "Blacky1999/Googlevideo-Blocklist-Fanger")
+            self.assertEqual(len(github_requests), 2)
 
 
 if __name__ == "__main__":
