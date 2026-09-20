@@ -1,11 +1,10 @@
 ! Title: Googlevideo-Blocklist-Fanger
 ! Generated from AdGuard DNS Query Logs
 ! Synced automatically to GitHub when changed
-! Entries: 693
+! Entries: 673
 
 ||r1---sn-tn.googlevideo.com^
 ||r1.sn-tn.googlevideo.com^
-||redirector.googlevideo.com^
 ||rr1---sn-1giz7n7l.googlevideo.com^
 ||rr1---sn-4g5e6ns6.googlevideo.com^
 ||rr1---sn-4g5e6nss.googlevideo.com^
@@ -54,8 +53,6 @@
 ||rr1---sn-ajh0j5-5x.googlevideo.com^
 ||rr1---sn-ajixh5-55.googlevideo.com^
 ||rr1---sn-axq7sn76.googlevideo.com^
-||rr1---sn-bvvbaxivnuxq8vq54voxqx-4g5e.googlevideo.com^
-||rr1---sn-bvvbaxivnuxq8vq54voxqx-4g5l.googlevideo.com^
 ||rr1---sn-h0jelne6.googlevideo.com^
 ||rr1---sn-ixh7rn76.googlevideo.com^
 ||rr1---sn-ixh7yn7e.googlevideo.com^
@@ -125,7 +122,6 @@
 ||rr1.sn-ajh0j5-5x.googlevideo.com^
 ||rr1.sn-ajixh5-55.googlevideo.com^
 ||rr1.sn-axq7sn76.googlevideo.com^
-||rr1.sn-bvvbaxivnuxq8vq54voxqx-4g5e.googlevideo.com^
 ||rr1.sn-h0jelne6.googlevideo.com^
 ||rr1.sn-ixh7rn76.googlevideo.com^
 ||rr1.sn-ixh7yn7e.googlevideo.com^
@@ -146,8 +142,6 @@
 ||rr1.sn-u15hn5-5t.googlevideo.com^
 ||rr1.sn-u15hn5-c5.googlevideo.com^
 ||rr10---sn-axq7sn76.googlevideo.com^
-||rr10---sn-bvvbaxivnuxq8vq54voxqx-4g5e.googlevideo.com^
-||rr10---sn-bvvbaxivnuxq8vq54voxqx-4g5l.googlevideo.com^
 ||rr10.sn-axq7sn76.googlevideo.com^
 ||rr11---sn-axq7sn76.googlevideo.com^
 ||rr11.sn-axq7sn76.googlevideo.com^
@@ -204,8 +198,6 @@
 ||rr2---sn-aj4g55-5v.googlevideo.com^
 ||rr2---sn-aj5go5-5p.googlevideo.com^
 ||rr2---sn-axq7sn7z.googlevideo.com^
-||rr2---sn-bvvbaxivnuxq8vq54voxqx-4g5e.googlevideo.com^
-||rr2---sn-bvvbaxivnuxq8vq54voxqx-4g5l.googlevideo.com^
 ||rr2---sn-h0jeener.googlevideo.com^
 ||rr2---sn-h0jelne6.googlevideo.com^
 ||rr2---sn-ixh7yn7e.googlevideo.com^
@@ -325,8 +317,6 @@
 ||rr3---sn-aj5go5-53.googlevideo.com^
 ||rr3---sn-aj5goc-5j.googlevideo.com^
 ||rr3---sn-axq7sn7z.googlevideo.com^
-||rr3---sn-bvvbaxivnuxq8vq54voxqx-4g5e.googlevideo.com^
-||rr3---sn-bvvbaxivnuxq8vq54voxqx-4g5l.googlevideo.com^
 ||rr3---sn-h0jeener.googlevideo.com^
 ||rr3---sn-hgn7rn7r.googlevideo.com^
 ||rr3---sn-ixh7yn7e.googlevideo.com^
@@ -452,7 +442,6 @@
 ||rr4---sn-aj4g55-j5.googlevideo.com^
 ||rr4---sn-aj5goc-5j.googlevideo.com^
 ||rr4---sn-ajixh5-55.googlevideo.com^
-||rr4---sn-bvvbaxivnuxq8vq54voxqx-4g5l.googlevideo.com^
 ||rr4---sn-hgn7rnls.googlevideo.com^
 ||rr4---sn-ixh7rn76.googlevideo.com^
 ||rr4---sn-ixh7yn7e.googlevideo.com^
@@ -680,19 +669,10 @@
 ||rr5.sn-u15hn5-5h.googlevideo.com^
 ||rr5.sn-u15hn5-c5.googlevideo.com^
 ||rr6---sn-axq7sn76.googlevideo.com^
-||rr6---sn-bvvbaxivnuxq8vq54voxqx-4g5e.googlevideo.com^
-||rr6---sn-bvvbaxivnuxq8vq54voxqx-4g5l.googlevideo.com^
 ||rr6.sn-axq7sn76.googlevideo.com^
 ||rr7---sn-axq7sn7z.googlevideo.com^
-||rr7---sn-bvvbaxivnuxq8vq54voxqx-4g5e.googlevideo.com^
-||rr7---sn-bvvbaxivnuxq8vq54voxqx-4g5l.googlevideo.com^
 ||rr7.sn-axq7sn7z.googlevideo.com^
 ||rr8---sn-axq7sn7e.googlevideo.com^
-||rr8---sn-bvvbaxivnuxq8vq54voxqx-4g5e.googlevideo.com^
-||rr8---sn-bvvbaxivnuxq8vq54voxqx-4g5l.googlevideo.com^
 ||rr8.sn-axq7sn7e.googlevideo.com^
 ||rr9---sn-axq7sn76.googlevideo.com^
-||rr9---sn-bvvbaxivnuxq8vq54voxqx-4g5e.googlevideo.com^
-||rr9---sn-bvvbaxivnuxq8vq54voxqx-4g5l.googlevideo.com^
 ||rr9.sn-axq7sn76.googlevideo.com^
-||rr9.sn-bvvbaxivnuxq8vq54voxqx-4g5l.googlevideo.com^
