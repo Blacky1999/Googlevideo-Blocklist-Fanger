@@ -18,7 +18,7 @@ Nicht verwendet werden lokale DNS-/Proxy-Logs, `dns-query`-URLs, DoH-Passwörter
 Auf jedes `domain`-Feld der AdGuard-DNS-API wird dieser Regex angewandt:
 
 ```python
-re.compile("(?i)(?<![a-z0-9_.-])(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)*googlevideo\\.com(?![a-z0-9_.-])")
+re.compile("Private Sorry”)
 ```
 
 Damit werden beispielsweise erkannt:
