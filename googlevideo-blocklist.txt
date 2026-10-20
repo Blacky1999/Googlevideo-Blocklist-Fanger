@@ -1,10 +1,11 @@
 ! Title: Googlevideo-Blocklist-Fanger
 ! Generated from AdGuard DNS Query Logs
 ! Synced automatically to GitHub when changed
-! Entries: 96
+! Entries: 97
 
 ||r1---sn-4g5e6nz7.googlevideo.com^
 ||r1---sn-4g5ednkl.googlevideo.com^
+||r1---sn-4g5ednkz.googlevideo.com^
 ||r1---sn-4g5ednre.googlevideo.com^
 ||r1---sn-4g5ednrl.googlevideo.com^
 ||r2---sn-u14g55-5c.googlevideo.com^
