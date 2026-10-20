@@ -1,7 +1,7 @@
 ! Title: Googlevideo-Blocklist-Fanger
 ! Generated from AdGuard DNS Query Logs
 ! Synced automatically to GitHub when changed
-! Entries: 374
+! Entries: 377
 
 ||r1---sn-2op5q5-5n.googlevideo.com^
 ||r1---sn-4g5e6ns6.googlevideo.com^
@@ -170,6 +170,7 @@
 ||rr2---sn-4g5ednde.googlevideo.com^
 ||rr2---sn-4g5ednkz.googlevideo.com^
 ||rr2---sn-4g5ednr7.googlevideo.com^
+||rr2---sn-4g5lznld.googlevideo.com^
 ||rr2---sn-4g5lznly.googlevideo.com^
 ||rr2---sn-4g5lzns7.googlevideo.com^
 ||rr2---sn-ab5l6nkd.googlevideo.com^
@@ -197,6 +198,7 @@
 ||rr2.sn-4g5ednde.googlevideo.com^
 ||rr2.sn-4g5ednkz.googlevideo.com^
 ||rr2.sn-4g5ednr7.googlevideo.com^
+||rr2.sn-4g5lznld.googlevideo.com^
 ||rr2.sn-4g5lznly.googlevideo.com^
 ||rr2.sn-ab5l6nrd.googlevideo.com^
 ||rr2.sn-ab5l6ny7.googlevideo.com^
@@ -333,6 +335,7 @@
 ||rr5---sn-bvvbaxivnuxq8vq54voxqx-4g5e.googlevideo.com^
 ||rr5---sn-bvvbaxivnuxq8vq54voxqx-4g5l.googlevideo.com^
 ||rr5---sn-p5qlsndr.googlevideo.com^
+||rr5---sn-q4fl6ns6.googlevideo.com^
 ||rr5---sn-q4fl6nz6.googlevideo.com^
 ||rr5---sn-q4flrnez.googlevideo.com^
 ||rr5---sn-u14g55-cw.googlevideo.com^
