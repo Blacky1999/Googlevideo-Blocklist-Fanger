@@ -1,7 +1,7 @@
 ! Title: Googlevideo-Blocklist-Fanger
 ! Generated from AdGuard DNS Query Logs
 ! Synced automatically to GitHub when changed
-! Entries: 123
+! Entries: 116
 
 ||r1---sn-a5mekn6k.googlevideo.com^
 ||r1---sn-o097znzd.googlevideo.com^
@@ -30,14 +30,12 @@
 ||rr1---sn-qja5m5-5v.googlevideo.com^
 ||rr1.sn-4g5edndk.googlevideo.com^
 ||rr1.sn-a5mlrnll.googlevideo.com^
-||rr1.sn-ntqe6nee.googlevideo.com^
 ||rr10---sn-bvvbaxivnuxq8vq54voxqx-4g5e.googlevideo.com^
 ||rr10---sn-bvvbaxivnuxq8vq54voxqx-4g5l.googlevideo.com^
 ||rr2---sn-4g5e6nzs.googlevideo.com^
 ||rr2---sn-4g5ednde.googlevideo.com^
 ||rr2---sn-a5m7lnly.googlevideo.com^
 ||rr2---sn-a5mekn6k.googlevideo.com^
-||rr2---sn-a5mekndd.googlevideo.com^
 ||rr2---sn-a5mekndz.googlevideo.com^
 ||rr2---sn-a5msen7z.googlevideo.com^
 ||rr2---sn-a5msenes.googlevideo.com^
@@ -48,7 +46,6 @@
 ||rr2---sn-nx57ynz7.googlevideo.com^
 ||rr2---sn-q4fl6n6r.googlevideo.com^
 ||rr2---sn-q4fl6n6y.googlevideo.com^
-||rr2.sn-a5mekndd.googlevideo.com^
 ||rr2.sn-a5mekndz.googlevideo.com^
 ||rr2.sn-nx57ynsk.googlevideo.com^
 ||rr2.sn-nx57ynz7.googlevideo.com^
@@ -56,7 +53,6 @@
 ||rr3---sn-2onx5c-5p.googlevideo.com^
 ||rr3---sn-2onx5c-5x.googlevideo.com^
 ||rr3---sn-4g5e6nss.googlevideo.com^
-||rr3---sn-4g5e6nze.googlevideo.com^
 ||rr3---sn-4g5ednkd.googlevideo.com^
 ||rr3---sn-4g5ednr7.googlevideo.com^
 ||rr3---sn-a5meknsy.googlevideo.com^
@@ -88,11 +84,9 @@
 ||rr4---sn-q4flrnl7.googlevideo.com^
 ||rr4---sn-qja5m5-59.googlevideo.com^
 ||rr4---sn-qja5m5-5b.googlevideo.com^
-||rr4---sn-u14g55-c3.googlevideo.com^
 ||rr4.sn-bvvbaxivnuxq8vq54voxqx-4g5e.googlevideo.com^
 ||rr4.sn-bvvbaxivnuxq8vq54voxqx-4g5l.googlevideo.com^
 ||rr4.sn-nx5e6nle.googlevideo.com^
-||rr4.sn-u14g55-c3.googlevideo.com^
 ||rr5---sn-a5m7lnlr.googlevideo.com^
 ||rr5---sn-a5m7lnly.googlevideo.com^
 ||rr5---sn-a5mekndz.googlevideo.com^
@@ -125,4 +119,3 @@
 ||rr8.sn-bvvbaxivnuxq8vq54voxqx-4g5l.googlevideo.com^
 ||rr9---sn-bvvbaxivnuxq8vq54voxqx-4g5e.googlevideo.com^
 ||rr9---sn-bvvbaxivnuxq8vq54voxqx-4g5l.googlevideo.com^
-||rr9.sn-bvvbaxivnuxq8vq54voxqx-4g5l.googlevideo.com^
