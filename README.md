@@ -7,6 +7,4 @@
 
 ## Offizielle Dokumentation
 
-- [AdGuard DNS API Reference](https://adguard-dns.io/kb/private-dns/api/reference/)
-- [AdGuard DNS Query Log](https://adguard-dns.io/kb/private-dns/statistics-and-log/query-log/)
-- [GitHub: Create or update file contents](https://docs.github.com/en/rest/repos/contents#create-or-update-file-contents)
+N/A
